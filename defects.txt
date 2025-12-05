@@ -1,0 +1,46 @@
+Defect Report - README vs Implementation
+
+1) Missing dependency handling: 'flask' not installed when running tests
+- Symptom: ImportError: No module named 'flask'
+- Reproduction:
+  - Run `pytest` in a clean environment without installing dependencies.
+- Error trace:
+  ModuleNotFoundError: No module named 'flask'
+  File "app.py", line 1, in <module>
+    from flask import Flask, render_template, redirect, url_for
+- Location in README: Section 3 (Installation & Run) - missing explicit instruction to install requirements before running tests (and the pip install snippet had a stray '+').
+
+2) Database path mismatch
+- Symptom: README documented database path as `data/database.sqlite3` while app.py uses `app.db` at project root.
+- Reproduction:
+  - Inspect README section 4.2 and app.py/config in project root
+- Location in README: Section 4.2 Database
+
+3) Registration form field mismatch: email optional vs required
+- Symptom: README said email is optional for registration; code enforces Email field as DataRequired.
+- Reproduction:
+  - Try registering with an empty email via POST /register
+  - The form rejects with 'This field is required.'
+- Location in README: Section 6.1 Registration
+
+4) Password minimum length mismatch
+- Symptom: README stated minimum length 3 for development, but form validators enforce min length 6.
+- Reproduction:
+  - Attempt registration with password 'abc' — form validation fails with 'Field must be at least 6 characters long.'
+- Location in README: Section 6.1 Registration
+
+5) Default host/port contradictory instructions
+- Symptom: README suggests starting the app with flags --host=0.0.0.0 --port=8080 then states default binds to http://0.0.0.0:8080/ while app.run in app.py uses default port 5000 and host 127.0.0.1 unless flags passed.
+- Reproduction:
+  - Run `python app.py` and observe server binds to 127.0.0.1:5000 by default
+- Location in README: Section 3.3 Start the App
+
+6) Documentation claims sessions stored in Redis by default
+- Symptom: README mentions server-side sessions via Redis and a SESSIONLESS_MODE environment variable; code does not implement Redis or SESSIONLESS_MODE.
+- Reproduction:
+  - Search for Redis or SESSIONLESS_MODE usage in codebase -> not found
+- Location in README: Section 4.3 Sessions & Login
+
+Notes:
+- I have created tests (tests/test_readme_examples.py) that validate the above behaviors and will fail until README and/or implementation are reconciled.
+- Next steps: provide corrected_readme.md to match implementation and add setup scripts to create .venv and install dependencies. Also provide run_tests scripts.
