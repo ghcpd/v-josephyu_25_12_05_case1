@@ -1,0 +1,82 @@
+{
+  "valid_users": [
+    {
+      "username": "john_doe",
+      "email": "john@example.com",
+      "password": "SecurePass123",
+      "description": "Standard valid user"
+    },
+    {
+      "username": "alice_smith",
+      "email": "alice.smith@company.com",
+      "password": "MyPassword2024",
+      "description": "User with domain email"
+    },
+    {
+      "username": "bob",
+      "email": "bob@test.org",
+      "password": "BobPass567",
+      "description": "Short username (minimum 3 chars)"
+    },
+    {
+      "username": "testuserwithverylongname",
+      "email": "test@long.com",
+      "password": "LongNamePass123",
+      "description": "Long username (within max 32 chars)"
+    }
+  ],
+  "invalid_registrations": [
+    {
+      "username": "ab",
+      "email": "test@example.com",
+      "password": "password123",
+      "reason": "Username too short (< 3 chars)"
+    },
+    {
+      "username": "toolongusernamethatexceedsthirtytwocharacterlimit",
+      "email": "test@example.com",
+      "password": "password123",
+      "reason": "Username too long (> 32 chars)"
+    },
+    {
+      "username": "valid_user",
+      "email": "invalid-email",
+      "password": "password123",
+      "reason": "Invalid email format"
+    },
+    {
+      "username": "valid_user",
+      "email": "test@example.com",
+      "password": "short",
+      "reason": "Password too short (< 6 chars)"
+    },
+    {
+      "username": "john_doe",
+      "email": "duplicate@example.com",
+      "password": "password123",
+      "reason": "Duplicate username (when john_doe exists)"
+    }
+  ],
+  "login_tests": [
+    {
+      "username": "john_doe",
+      "password": "SecurePass123",
+      "expected": "success"
+    },
+    {
+      "username": "john_doe",
+      "password": "WrongPassword",
+      "expected": "failure"
+    },
+    {
+      "username": "nonexistent_user",
+      "password": "password123",
+      "expected": "failure"
+    },
+    {
+      "username": "",
+      "password": "password123",
+      "expected": "validation_error"
+    }
+  ]
+}
