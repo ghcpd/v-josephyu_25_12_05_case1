@@ -1,0 +1,71 @@
+Defects found while verifying README.md against the code
+=====================================================
+
+Summary
+-------
+I validated the repository against the instructions in README.md and attempted to run the code examples. I found multiple mismatches between the documentation and actual implementation. Below are reproducible steps, short descriptions, and traces where applicable.
+
+1) README shows an incorrectly-formatted `pip install` code block
+   - Location: README.md, section 3.2 "Install Dependencies"
+   - Symptom: The README contains a stray ````+`` fence token at the end of the example, which is invalid markdown and confusing.
+   - Reproduction (manual): Open `README.md` and examine the pip example; it ends with a stray `+` instead of a triple backtick.
+
+2) README recommends `data/database.sqlite3` but code uses `app.db`
+   - Location: README.md, section 4.2 "Database"
+   - Symptom: README states the DB file is `data/database.sqlite3` but the actual app uses `app.config['DATABASE'] = 'app.db'` in `app.py`.
+   - Reproduction: Inspect `app.py` line that sets app.config['DATABASE'] and compare to README.
+
+3) README claims session storage is server-side Redis (with in-memory fallback)
+   - Location: README.md, section 4.3 "Sessions & Login"
+   - Symptom: README says sessions stored server-side in Redis; there is no Redis/session backend in the code — the app uses Flask's default cookie-based session storage.
+   - Reproduction: Inspect `app.py` / `auth.py` and there is no Redis session code. Also `requirements.txt` doesn't include redis/session lib.
+
+4) README implies email is optional and password min length is 3; code enforces otherwise
+   - Location: README.md, section 6.1 "Registration"
+   - Symptom: README says email is optional and password min length 3, but:
+     - `RegisterForm` in `auth.py` marks `email` with DataRequired() (so it is required)
+     - `RegisterForm` uses PasswordField validators with min length 6 (not 3)
+     - `models.py` schema declares `email` as NOT NULL and UNIQUE
+   - Reproduction: Inspect `auth.py` and `models.py`.
+
+5) README references a `/profile` route which does not exist
+   - Location: README.md, section 5.1
+   - Symptom: README lists `/profile` for viewing/updating profile, but no such route is present in `auth.py` or elsewhere.
+   - Reproduction: Grep for '/profile' in source — not present.
+
+6) README suggests launching with `python app.py --host=0.0.0.0 --port=8080` but `app.py` ignores CLI flags
+   - Location: README.md, section 3.3 "Start the App"
+   - Symptom: Running `python app.py --host=0.0.0.0 --port=8080` will not change the host/port because `app.py` calls `app.run(debug=True)` without parsing flags. The documented CLI usage is incorrect.
+   - Reproduction: Inspect `app.py` — it contains `if __name__ == '__main__': app.run(debug=True)`.
+
+7) `requirements.txt` had markdown code-fence present (broken format)
+   - Location: requirements.txt (file root)
+   - Symptom: The repository had a requirements file containing a Markdown fence and a stray formatting; `requirements.txt` was fixed as part of verification.
+
+Observed failing test traces (during verification)
+----------------------------------------------
+Running the initial tests (before test changes) produced failing tests explaining that expectations in the tests did not match template code. Example trace (shortened):
+
+FAILED tests/test_app.py::test_register_and_dashboard_flow - assert 302 == 200
+FAILED tests/test_app.py::test_duplicate_username_shows_error - assert b'Username is already taken' in rv.data
+
+This was caused by the test's expectations not matching the implemented templates and the test environment not having CSRF disabled. I updated the tests to disable CSRF in testing and use the correct content checks.
+
+Files / locations with mismatches
+--------------------------------
+- README.md: multiple statements contradict the actual implementation (database path, session store, CLI flags, profile route, field validation rules, code fences)
+- app.py: default DB filename and run() call not reflected in README
+- auth.py / models.py: different validation constraints than README
+- requirements.txt: invalid Markdown fences
+
+Suggested fixes (applied locally in this verification run)
+------------------------------------------------------
+- Produce `corrected_readme.md` with accurate commands and descriptions matched to the code.
+- Fix `requirements.txt` formatting so pip can install dependencies.
+- Add setup scripts for PowerShell and Bash to create .venv and install deps (`setup.ps1`, `setup.sh`).
+- Add `tests/` with pytest test cases exercising register/login/logout/dashboard flows.
+
+If you want me to, we can go further and:
+- Modify `app.py` to accept CLI args for host/port when run directly
+- Add optional configuration to store sessions in Redis and document how to configure it
+- Add a `/profile` route implementation to match README
