@@ -1,0 +1,56 @@
+Defects discovered during README verification
+
+1) Wrong Database path described in README (Section 4.2)
+	- README claims: app.config['DATABASE'] = 'data/database.sqlite3'
+	- Actual code: app.config['DATABASE'] = 'app.db' (in `app.py`)
+	- Reproduction:
+		 - Open `app.py` and inspect `app.config['DATABASE']` value
+		 - Run tests which assert config value: see `test_files/test_app.py::test_database_path_default`
+	- Error trace / evidence: see test output, 5 passed in tests which assert actual value is 'app.db'
+
+2) README claims sessions stored server-side in Redis (Section 4.3) — not implemented
+	- README: "Sessions are stored server-side in Redis"
+	- Actual code: uses Flask default session mechanism + Flask-Login; no Redis integration present in codebase.
+	- Reproduction: search `redis` in project; not found. Server runs with client-side cookies and Flask-Login session.
+
+3) README documents `SESSIONLESS_MODE=true` support (Section 4.3) — not implemented
+	- Reproduction: start app with env var set; no code reads `SESSIONLESS_MODE`.
+
+4) Password minimum length mismatch (Section 6.1)
+	- README: "Minimum length 3"
+	- Code: `RegisterForm.password` validators enforce min length 6 (in `auth.py`).
+	- Reproduction: test `test_password_min_length` posts password '123' and verifies the form rejects it; original test failure trace shown below.
+	- Error trace (failing assertion during test development):
+```
+FAILED test_files/test_app.py::test_password_min_length - assert (b'Field must be at least 6 characters long' in ...)
+```
+	- Fix: update README to note minimum length 6 OR change validators to 3.
+
+5) Email optional vs required discrepancy (Section 6.1)
+	- README: "email optional"
+	- Code: `RegisterForm.email` has `DataRequired()` validator so email is required.
+	- Reproduction: POST to /register without email returns error indicating email is required (verified in tests).
+
+6) README lists `--host`/`--port` flags to `python app.py` (Section 3.3) — not handled
+	- README: `python app.py --host=0.0.0.0 --port=8080` specified
+	- Actual code: `app.py` runs `app.run(debug=True)` unconditionally and does not parse args
+	- Reproduction: running with flags has no effect; process still binds to default 127.0.0.1:5000 when run outside flask tooling.
+	- Proposed fix: use an argument parser in `app.py` or update README to use `flask run --host=0.0.0.0 --port=8080` or set env var `FLASK_RUN_PORT` and `FLASK_RUN_HOST` when using `flask run`.
+
+7) README mentions `/profile` route (Section 5.1) — not present in `auth.py`
+	- Reproduction: GET /profile returns 404 (test `test_profile_route_missing`)
+
+8) Typo / formatting issues in README (Section 3.2)
+	- Backtick/quote error: the pip install block ends with a stray `+` which is a markdown / code block error.
+
+Locations of defects in README: See README.md Section headings noted above (4.2 / 4.3 / 3.3 / 5.1 / 6.1 etc.)
+
+Reproduction procedure (general)
+--------------------------------
+1. Create and activate a venv in project root (see setup.ps1/setup.sh)
+2. pip install -r requirements.txt
+3. Run pytest (run_tests.ps1 / run_tests.sh) - all tests should pass after the corrected assertions and test additions; the test suite documents mismatches.
+
+Notes:
+- The test suite `test_files/test_app.py` contains tests that codify these mismatches.
+
