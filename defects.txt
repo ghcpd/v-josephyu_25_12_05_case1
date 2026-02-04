@@ -1,0 +1,48 @@
+Defects discovered during README verification
+
+1) README claims database is configured as `app.config['DATABASE'] = 'data/database.sqlite3'` (Section 4.2)
+	- Actual: `app.py` sets `app.config['DATABASE'] = 'app.db'` (root-level file).
+	- Reproduction: Run `python app.py` and inspect that `app.db` is created.
+	- Location: README Section 4.2
+
+2) README shows a command typo when installing quick packages: trailing `+` after code block (Section 3.2)
+	- Actual: README includes a stray `+` character after the pip install snippet which will confuse copy/paste.
+	- Reproduction: None (documentation typo).
+	- Location: README Section 3.2
+
+3) README mentions sessions stored in Redis and `SESSIONLESS_MODE` environment variable (Section 4.3)
+	- Actual: Project does not implement Redis or sessionless mode. Sessions use Flask default secure cookie session.
+	- Reproduction: Inspect `app.py` and `models.py` for session store — none present.
+	- Location: README Section 4.3
+
+4) README routes list includes `/profile` (Section 5.1)
+	- Actual: `auth.py`/`app.py` do not define a `/profile` route.
+	- Reproduction: Navigate to `/profile` in running app — 404 returned.
+	- Location: README Section 5.1
+
+5) Form password min length mismatch (Section 6.1)
+	- README documents minimum password length 3 for development, but `auth.py` enforces `Length(min=6)`.
+	- Reproduction: Attempt to register with 3-char password — validation error.
+	- Location: README Section 6.1
+
+6) Database schema email uniqueness: README claims `init_db(app)` will create `data/database.sqlite3` and enforce unique email.
+	- Actual: `models.init_db` creates `users` table with `email TEXT UNIQUE NOT NULL` but also attempts migration adding `email` column without NOT NULL enforcement; existing rows may get NULL causing potential issues.
+	- Reproduction: See `models.py` init_db implementation.
+	- Location: README Section 7
+
+	7) Test collection ImportError when tests import `app` from nested paths
+		 - Before fixes: pytest failed with `ModuleNotFoundError: No module named 'app'` when running from test folder.
+		 - Reproduction:
+			 - Run `pytest` from project root with the provided `test_files/test_app.py` that imports `app`.
+			 - Error arises because test run's sys.path may not include project root when tests are nested.
+		 - Fix: test file now inserts project root into `sys.path` before importing `app`.
+
+	8) Test assertion failure in registration/login flow (mismatch with rendered template)
+		 - Observed: After registering and then logging in, test expected the exact phrase 'You are logged in' in response body, but template renders 'Hello, <strong>{{ user.username }}</strong>! You are logged in.' causing earlier strict match to fail.
+		 - Reproduction steps:
+			 1. Run `pytest` before test was adjusted.
+			 2. See failure `AssertionError` with response HTML printed.
+		 - Fix: tests now assert presence of either the phrase or the rendered welcome string.
+
+
+
