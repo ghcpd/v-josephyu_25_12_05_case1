@@ -64,7 +64,7 @@ For quick testing, you may also directly install the core packages (reference on
 
 ```powershell
 pip install flask flask-login flask-wtf wtforms
-``+
+```
 
 ### 3.3 Start the App
 
@@ -107,12 +107,12 @@ app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET', 'replace-with-a-strong
 The project uses a SQLite database configured in `app.py`:
 
 ```python
-app.config['DATABASE'] = 'data/database.sqlite3'
+app.config['DATABASE'] = 'app.db'
 ```
 
-- Database file name: `database.sqlite3`
-- Location: `data/` subdirectory under the project root
-- The legacy `app.db` name is no longer recommended, but may still be accepted for backward compatibility.
+- Database file name: `app.db`
+- Location: project root (file `app.db`)
+- The default database filename is `app.db`. You may change this by updating app.config['DATABASE']. For a subdirectory, ensure the path exists.
 - `init_db(app)` will create the database and tables on startup if they do not exist.
 
 ### 4.3 Sessions & Login
@@ -169,12 +169,12 @@ Typical fields:
   - Required
   - Usually 3–32 characters (see actual form/model for exact limits)
 - `email`
-  - Optional for basic registration, but recommended
+  - Required for registration and must be a valid email format
   - If provided, must be a valid email format
   - Typically unique in the database (to prevent duplicate accounts)
 - `password`
   - Required
-  - Minimum length **3** for development/demo environments; can be increased in production
+  - Minimum length **6** for development/demo environments; can be increased in production
   - Stored as a hash (e.g., via Werkzeug utilities)
 
 
